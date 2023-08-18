@@ -1,10 +1,15 @@
 import axios from 'axios';
 import cheerio from 'cheerio';
 import puppeteer from 'puppeteer';
+import { Page } from 'puppeteer';
 
 import { Handler, Context, Callback } from 'aws-lambda';
 
 export const handler: Handler = async (event: any, context: Context, callback: Callback) => {
+    const browser = await puppeteer.launch( { headless: 'new' } );
+    const page = await browser.newPage();
+    page.setDefaultTimeout(0);
+
     // TODO: need to handle pagination
     const URLS: string[] = [
         'https://www.amazon.jobs/en/teams/jobs-for-grads',
@@ -13,7 +18,7 @@ export const handler: Handler = async (event: any, context: Context, callback: C
 
     try {
         // Use Promise.all to await all the promises
-        const allJobTitles = await Promise.all(URLS.map(scrapeJobTitles));
+        const allJobTitles = await Promise.all(URLS.map(url => scrapeJobs(url, page)));
 
         // Flatten the array of arrays
         const jobTitles = allJobTitles.flat();
@@ -24,51 +29,26 @@ export const handler: Handler = async (event: any, context: Context, callback: C
         });
 
     } catch (error) {
-        console.error(`An error occurred: ${error}`);
+        console.error(error);
         callback(`An error occurred while scraping the job titles: ${error}`, {
             statusCode: 500,
             body: JSON.stringify('An error occurred while scraping the job titles.'),
         });
+    } finally {
+        await browser.close();
     }
 };
 
-// This function takes a URL and returns a promise with all the job titles from that URL
-async function scrapeJobTitles(URL: string): Promise<string[]> {
-    const jobTitles: string[] = [];
-    const response = await axios.get(URL);
-
-    const $ = cheerio.load(response.data);
-
-    //console.log(response.data);
-
-    $('div.job-tile').each((index, element) => {
-        const title = $(element).find('h3.job-title').text();
-        console.log('job found');
-        jobTitles.push(title);
-    });
-
-    return jobTitles;   
-}
-
-async function scrapeAmazonJobs() {
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
-    await page.goto('https://www.amazon.jobs/en/teams/jobs-for-grads');
-  
-    // You may need to add specific waits here to ensure the content has loaded
+async function scrapeJobs(URL: string, page: Page): Promise<string[]> {
+    await page.goto(URL, { waitUntil: 'domcontentloaded' });
+    
     await page.waitForSelector('.job-tile');
-
 
     const jobs = await page.evaluate(() => {
       // Replace the selector with the correct one for the job listings
       const jobElements = document.querySelectorAll('.job-tile');
-      return Array.from(jobElements).map(job => job.textContent);
+      return Array.from(jobElements).map(job => job.textContent || '');
     });
-  
-    await browser.close();
+    
     return jobs;
 }
-  
-scrapeAmazonJobs().then(jobs => {
-    console.log(jobs); // Prints the job listings
-});
