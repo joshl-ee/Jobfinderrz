@@ -1,0 +1,25 @@
+{
+  "name": "Jobfinderrz",
+  "version": "1.0.0",
+  "description": "A Lambda function that notifies users about new job postings",
+  "main": "index.js",
+  "repository": "git@github.com:joshl-ee/Jobfinderrz.git",
+  "author": "Josh Lee <joshlee@usc.edu>",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.4.0",
+    "cheerio": "^1.0.0-rc.12",
+    "puppeteer": "^21.0.3"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.119",
+    "@types/axios": "^0.14.0",
+    "@types/cheerio": "^0.22.31",
+    "@types/node": "^20.5.0",
+    "aws-sdk": "^2.1439.0",
+    "serverless": "^3.34.0",
+    "serverless-offline": "^12.0.4",
+    "serverless-plugin-typescript": "^2.1.5",
+    "typescript": "^5.1.6"
+  }
+}
