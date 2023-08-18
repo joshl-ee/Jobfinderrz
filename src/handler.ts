@@ -1,31 +1,38 @@
-import axios from 'axios';
-import cheerio from 'cheerio';
 import puppeteer from 'puppeteer';
 import { Page } from 'puppeteer';
-
+import { Jobs } from './configs';
+import * as Types from  './types';
+import * as Utility from './utility';
 import { Handler, Context, Callback } from 'aws-lambda';
 
 export const handler: Handler = async (event: any, context: Context, callback: Callback) => {
     const browser = await puppeteer.launch( { headless: 'new' } );
-    const page = await browser.newPage();
-    page.setDefaultTimeout(0);
-
-    // TODO: need to handle pagination
-    const URLS: string[] = [
-        'https://www.amazon.jobs/en/teams/jobs-for-grads',
-        //'https://www.metacareers.com/careerprograms/students/?p[teams][0]=Internship%20-%20Engineering%2C%20Tech%20%26%20Design&p[teams][1]=Internship%20-%20Business&p[teams][2]=Internship%20-%20PhD&p[teams][3]=University%20Grad%20-%20PhD%20%26%20Postdoc&p[teams][4]=University%20Grad%20-%20Engineering%2C%20Tech%20%26%20Design&p[teams][5]=University%20Grad%20-%20Business&teams[0]=Internship%20-%20Engineering%2C%20Tech%20%26%20Design&teams[1]=Internship%20-%20Business&teams[2]=Internship%20-%20PhD&teams[3]=University%20Grad%20-%20PhD%20%26%20Postdoc&teams[4]=University%20Grad%20-%20Engineering%2C%20Tech%20%26%20Design&teams[5]=University%20Grad%20-%20Business#openpositions',
-    ];
 
     try {
-        // Use Promise.all to await all the promises
-        const allJobTitles = await Promise.all(URLS.map(url => scrapeJobs(url, page)));
+        // Find jobs for every company in configs.ts.
+        const allJobs = await Promise.all(Object.entries(Jobs).map( async ([company, config]) => {
+            const page = await browser.newPage();
 
-        // Flatten the array of arrays
-        const jobTitles = allJobTitles.flat();
+            // Debug purposes.
+            await page.on('console', msg => console.log('PAGE LOG:', msg.text()));
+            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537');
+            page.setDefaultTimeout(0);
+
+            let jobs: Types.JobDescription[] = [];
+            const companyJobs: Types.CompanyJobs = {company: company, jobDescriptions: jobs};
+            
+            try {
+                companyJobs.jobDescriptions = await scrapeJobs(config, page);
+            }
+            catch (error) {
+                companyJobs.error = String(error);
+            }
+            return companyJobs;
+        }));
 
         callback(null, {
             statusCode: 200,
-            body: JSON.stringify(jobTitles),
+            body: JSON.stringify(allJobs),
         });
 
     } catch (error) {
@@ -39,16 +46,49 @@ export const handler: Handler = async (event: any, context: Context, callback: C
     }
 };
 
-async function scrapeJobs(URL: string, page: Page): Promise<string[]> {
-    await page.goto(URL, { waitUntil: 'domcontentloaded' });
-    
-    await page.waitForSelector('.job-tile');
+async function scrapeJobs(config: Types.JobConfig, page: Page): Promise<Types.JobDescription[]> {
+    const URL = config.postingSite;
 
-    const jobs = await page.evaluate(() => {
-      // Replace the selector with the correct one for the job listings
-      const jobElements = document.querySelectorAll('.job-tile');
-      return Array.from(jobElements).map(job => job.textContent || '');
-    });
-    
-    return jobs;
+    console.log('postingSite: ' + URL);
+    try {
+        
+        await page.goto(URL, { waitUntil: 'domcontentloaded' });
+        console.log('page loaded');
+
+        await page.waitForSelector(config.jobTile);
+        console.log('first selector');
+
+        const jobs = await page.evaluate((config) => {
+            console.log('looking for jobs');
+            const jobDetails = document.querySelectorAll(config.jobTile);
+
+
+            if (jobDetails.length === 0) {
+                console.log('no jobs found');
+                throw new Error('No jobs found');
+            }
+
+            return Array.from(jobDetails).map(jobDetail => {
+                console.log('building ' + jobDetails.length + ' jobs');
+                const configDetails = config.details;
+                const job: Types.JobDescription = {};
+
+                for (const [property, selector] of Object.entries(configDetails)) {
+                    if (selector) {
+                        console.log('property: ' + property);
+                        if (property === 'link') {
+                            const linkElement = jobDetail.querySelector(selector) as HTMLAnchorElement;
+                            job[property as keyof Types.JobDescription] = linkElement ? config.baseSite + linkElement.getAttribute('href')! : '';
+                        }
+                        else job[property as keyof Types.JobDescription] = jobDetail.querySelector(selector)?.textContent || '';
+                    }
+                }
+                return job;
+            });
+        }, config);
+
+        return jobs;
+    } catch (error) {
+        throw error;
+    };
 }
