@@ -18,6 +18,26 @@ functions:
           path: /findjob
 
 environment:
+
+resources:
+  Resources:
+    DataTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: JobsTable
+        AttributeDefinitions:
+          - AttributeName: title
+            AttributeType: S
+          - AttributeName: description
+            AttributeType: S
+          - AttributeName: company
+            AttributeType: S
+        KeySchema:
+          - AttributeName: description
+            KeyType: HASH
+          - AttributeName: company
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
   
 plugins:
   - serverless-plugin-typescript

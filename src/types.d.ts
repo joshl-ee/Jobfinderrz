@@ -19,7 +19,7 @@ export type JobsConfig = {
 };
 
 export type CompanyJobs = {
-    company: string,
+    name: string,
     jobDescriptions: JobDescription[],
     error?: string,
 }
