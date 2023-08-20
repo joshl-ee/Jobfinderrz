@@ -79,7 +79,7 @@ async function sendNotifcation(newJobsArr: Types.CompanyJobs[]) {
         if (company.jobDescriptions) message += `New jobs at ${companyName}:\n`;
         company.jobDescriptions.forEach((job) => {
             if (!jobsFound) jobsFound = true;
-            if (job.title) message += `  - ${job.title}\n`;
+            if (job.title) message += `  - Title: ${job.title}\n`;
         });
         message += '\n';
     }
