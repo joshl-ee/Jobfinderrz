@@ -4,10 +4,12 @@ frameworkVersion: '3'
 
 provider:
   name: aws
-  runtime: nodejs18.x
+  runtime: nodejs14.x
   region: 'us-east-1'
-  memorySize: 128
+  memorySize: 512
   timeout: 600
+  iam:
+    role: arn:aws:iam::693609258176:role/JobFinderrz_Role
 
 functions:
   mainfunction:
@@ -26,8 +28,6 @@ resources:
       Properties:
         TableName: JobsTable
         AttributeDefinitions:
-          - AttributeName: title
-            AttributeType: S
           - AttributeName: description
             AttributeType: S
           - AttributeName: company
@@ -38,7 +38,7 @@ resources:
           - AttributeName: company
             KeyType: RANGE
         BillingMode: PAY_PER_REQUEST
-  
+
 plugins:
   - serverless-plugin-typescript
   - serverless-offline

@@ -13,20 +13,20 @@ export const Jobs: Types.JobsConfig = {
             description: '',
             link: 'a.job-link'
         }
+    },
+    microsoft: {
+        postingSite: 'https://jobs.careers.microsoft.com/global/en/search?p=Engineering&exp=Students%20and%20graduates&l=en_us&pg=1&pgSz=20&o=Recent',
+        baseSite: '',
+        jobTile: 'div.ms-List-cell',
+        details: {
+            title: 'h2.MZGzlrn8gfgSs8TZHhv2',
+            location: 'i[data-icon-name="POI"] + span',
+            id: '',
+            datePosted: 'i[data-icon-name="Clock"] + span',
+            description: '',
+            link: ''
+        }
     }
-    // microsoft: {
-    //     postingSite: 'https://jobs.careers.microsoft.com/global/en/search?p=Engineering&exp=Students%20and%20graduates&l=en_us&pg=1&pgSz=20&o=Recent',
-    //     baseSite: '',
-    //     jobTile: 'div.ms-List-cell',
-    //     details: {
-    //         title: 'h2.MZGzlrn8gfgSs8TZHhv2',
-    //         location: 'i[data-icon-name="POI"] + span',
-    //         id: '',
-    //         datePosted: 'i[data-icon-name="Clock"] + span',
-    //         description: '',
-    //         link: ''
-    //     }
-    // }
     // meta is blocking requests from here
     // meta: {
     //     postingSite: 'https://www.metacareers.com/jobs/',

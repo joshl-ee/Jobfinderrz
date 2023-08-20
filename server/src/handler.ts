@@ -1,13 +1,19 @@
-import puppeteer from 'puppeteer';
-import { Page } from 'puppeteer';
+import { Page } from 'puppeteer-core';
 import { Jobs } from './configs';
 import * as Types from  './types';
 import * as Utility from './utility';
 import { Handler, Context, Callback } from 'aws-lambda';
 import * as AWS from 'aws-sdk';
+import chromium from 'chrome-aws-lambda';
 
 export const handler: Handler = async (event: any, context: Context, callback: Callback) => {
-    const browser = await puppeteer.launch( { headless: 'new' } );
+    const browser = await chromium.puppeteer.launch({
+        args: chromium.args,
+        defaultViewport: chromium.defaultViewport,
+        executablePath: await chromium.executablePath,
+        headless: chromium.headless,
+        ignoreHTTPSErrors: true,
+      });
 
     try {
 
@@ -40,7 +46,7 @@ export const handler: Handler = async (event: any, context: Context, callback: C
         const newJobs = await processJobs(allJobs);
 
         // Send new jobs as text messages
-        
+        sendNotifcation(newJobs);
         
         callback(null, {
             statusCode: 200,
@@ -57,6 +63,42 @@ export const handler: Handler = async (event: any, context: Context, callback: C
         await browser.close();
     }
 };
+
+// Function to send notifications of new jobs
+async function sendNotifcation(newJobsArr: Types.CompanyJobs[]) {
+    const sns = new AWS.SNS();
+
+    let message = '';
+
+    let jobsFound = false;
+
+    for (const companyIndex in newJobsArr) {
+        const company = newJobsArr[companyIndex];
+        const companyName = company.name;
+
+        if (company.jobDescriptions) message += `New jobs at ${companyName}:\n`;
+        company.jobDescriptions.forEach((job) => {
+            if (!jobsFound) jobsFound = true;
+            if (job.title) message += `  - ${job.title}\n`;
+        });
+        message += '\n';
+    }
+    
+    const params: AWS.SNS.PublishInput = {
+        Message: message,
+        TopicArn: 'arn:aws:sns:us-east-1:693609258176:JobFinderrz'
+    };
+        
+    if (jobsFound) {
+        try {
+            const result = await sns.publish(params).promise();
+            console.log('Message sent successfully', result.MessageId);
+        } catch (error) {
+            console.error('Error sending message', error);
+        }
+    }   
+}
+
 
 // Function to process the jobs on DynamoDB. Postings that do not exist already in the DB are returned.
 async function processJobs(companyJobsArr: Types.CompanyJobs[]): Promise<Types.CompanyJobs[]> {

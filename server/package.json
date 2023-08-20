@@ -7,24 +7,25 @@
   "author": "Josh Lee <joshlee@usc.edu>",
   "license": "MIT",
   "dependencies": {
+    "aws-sdk": "^2.1440.0",
     "axios": "^1.4.0",
-    "cheerio": "^1.0.0-rc.12",
-    "puppeteer": "^21.0.3"
+    "chrome-aws-lambda": "^10.1.0",
+    "puppeteer-core": "10.1.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.119",
     "@types/axios": "^0.14.0",
-    "@types/cheerio": "^0.22.31",
     "@types/node": "^20.5.0",
-    "aws-sdk": "^2.1439.0",
+    "puppeteer": "^21.1.0",
     "react": "^18.2.0",
     "react-scripts": "^5.0.1",
     "serverless": "^3.34.0",
+    "serverless-finch": "^4.0.3",
     "serverless-offline": "^12.0.4",
     "serverless-plugin-typescript": "^2.1.5",
     "typescript": "^5.1.6"
   },
   "scripts": {
-    "start": "react-scripts start"
+    "deploy": "sls deploy && sls client deploy"
   }
 }
