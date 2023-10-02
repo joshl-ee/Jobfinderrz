@@ -16,7 +16,7 @@
     "@types/aws-lambda": "^8.10.119",
     "@types/axios": "^0.14.0",
     "@types/node": "^20.5.0",
-    "puppeteer": "^21.1.0",
+    "puppeteer": "10.1.0",
     "react": "^18.2.0",
     "react-scripts": "^5.0.1",
     "serverless": "^3.34.0",

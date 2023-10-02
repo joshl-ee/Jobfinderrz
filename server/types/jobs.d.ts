@@ -1,4 +1,4 @@
-export type JobDescription = {
+export type JobPosting = {
     title?: string,
     location?: string,
     id?: string,
@@ -7,20 +7,18 @@ export type JobDescription = {
     link?: string,
 }
 
-export type JobConfig = {
+export type CompanyConfig = {
+    company: string,
     postingSite: string,
     baseSite: string,
     jobTile: string,
-    details: JobDescription;
+    details: JobPosting;
 };
-  
-export type JobsConfig = {
-    [company: string]: JobConfig;
-};
+
 
 export type CompanyJobs = {
     name: string,
-    jobDescriptions: JobDescription[],
+    jobDescriptions: JobPosting[],
     error?: string,
 }
 
